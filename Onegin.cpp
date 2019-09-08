@@ -1,53 +1,99 @@
 #include <stdio.h>
-#include <locale.h>
 #include <cstring>
+#include <stdlib.h>
+#include <assert.h>
 
-const int NChars = 70;
-const int NLines = 50;
-
-void input (char text[NLines][NChars], char *index[NLines])
+//Counts number of symbols (NChars) in input file and returns it
+int count_chars (char *file_name)
 {
-	FILE*in = fopen ("onegin.txt", "r");
-	for (int i = 0; i < NLines; i++)
-	{
-		fgets (text[i], NChars, in);
-		index[i] = text[i];
-	}
+	assert (file_name);
+	FILE *in = fopen (file_name, "r");
+	int NChars = 0;
+	fseek (in, 0, SEEK_END);
+	NChars = ftell (in);
+	fclose (in);
+	return NChars;
 }
 
+//Reads input file, saves it in text[] and returns number of srings (NLines)
+int input (char *file_name, int NChars, char *text)
+{
+	int NLines = 0;
+	FILE *in = fopen (file_name, "r");
+	fread (text, sizeof (char), NChars, in);
+	fclose (in);
+	if (text[NChars - 1] != '\n')
+	{
+		text[NChars] = '\n';
+	}
+	for (int i = 0; i < NChars; i++)
+	{
+		if (text[i] == '\n')
+		{
+			NLines++;
+		}
+	}
+	return NLines;
+}
 
-void sort (char *index[NLines])
+//Sorts strings in recieved array
+void sort (char **index, int NLines, int NChars, char *text)
 {
 	char *tmp;
-	for (int i = 1; i < NLines; i++)
+	int j = 0;
+	index[0] = &text[0];
+	for (int i = 1; i <= NChars; i++)
 	{
-		for (int k = 1; k < NLines-i; k++)	 
-		if (strcmp (index[k], index[k-1]) < 0)
+		if (text[i-1] == '\n')
 		{
-			tmp = index[k];
-			index[k] = index[k-1];
-			index[k-1] = tmp;
+			text[i-1] = '\0';
+			j++;
+			index[j] = &text[i];
+		}
+	}
+	for (int i = 0; i < NLines; i++)
+	{
+		for (int k = 1; k < NLines-i; k++)
+		{
+			if (strcmp (index[k], index[k-1]) < 0)
+			{
+				tmp = index[k];
+				index[k] = index[k-1];
+				index[k-1] = tmp;
+			}
 		}
 
 	}
 }
 
-
-void output (char *index[NLines])
+//Writes sorted strings in output file
+void output (char *file_name, int NLines, char **index)
 {
-	FILE*out = fopen ("output.txt", "w");
+	assert (file_name);
+	assert (index);
+	FILE *out = fopen (file_name, "w");
 	for (int i = 0; i < NLines; i++)
 	{
-		fprintf(out, "%s", index[i]);
+		fprintf(out, "%s\n", index[i]);
 	}
 }
 
+
 int main ()
 {
-	setlocale (LC_ALL, "Rus");
-	char *index[NLines] = {};
-	char text[NLines][NChars] = {};
-	input (text, index); 
-	sort (index);
-	output (index);
+	int NChars = 0, NLines = 0;
+	char file_name[20];
+
+	printf ("Enter input file name: ");
+	scanf ("%s", file_name);
+	NChars = count_chars (file_name);
+	printf("|About input file:\n||Number of symbols: %d\n", NChars);
+	char text[NChars];
+	NLines = input (file_name, NChars, text);
+	printf("||Number of strings: %d\n", NLines);
+	char *index[NLines];
+	sort (index, NLines, NChars, text);
+	printf ("Enter output file name: ");
+	scanf ("%s", file_name);
+	output (file_name, NLines, index);
 }
