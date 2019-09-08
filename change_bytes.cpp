@@ -1,24 +1,44 @@
 #include <stdio.h>
 
-void count (char *str, int *n)
+//Переставляет байты полученного числа в обратном порядке с помощью адресов
+int pointer_change_bytes (int a)
 {
-	int i = 0;
-	while (i[str] != '\0')
+	char b[sizeof (int)] = {};
+	int j = 0;
+	printf ("\npointer_change_bytes result: ");
+	for (int i = sizeof(int)-1; i >= 0; i--)
 	{
-		i++;
+		b[j] = *((char*)(&a) + i);
+		j++;
 	}
-	*&*n = i;
-	return;
+	for (j = 0; j < sizeof (int); j++)
+	{
+		*((char*)(&a) + j) = b[j];
+	}
+	printf ("%d", a);
+	return 0;
+}
+
+//Переставляет байты полученного числа в обратном порядке путем арифметических вычислений
+int math_change_bytes (int a)
+{
+	printf ("\nmath_change_bytes result: ");
+	int b = 0;
+	for (int i = 0; i < sizeof (int); i++)
+	{
+		b = b * 256 + a % 256;
+		a = a / 256;
+	}
+	printf ("%d", b);
+	return 0;
 }
 
 
 int main ()
 {
-	int n = &n - &*&n;
-	char *str;
-	printf ("Enter string: ");
-	gets (*&*&str);
-	count (str, &*&n);
-	printf ("Number of symbols in string: %d", *&*&n);
-	return 0;
+	int num = 0;
+	printf ("Enter number: ");
+	scanf ("%d", &num);
+	pointer_change_bytes (num);
+	math_change_bytes (num);
 }
