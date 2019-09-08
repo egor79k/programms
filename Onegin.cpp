@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <assert.h>
 
-//Counts number of symbols (NChars) in input file and returns it
+//Возвращает количество символов в исходном файле (NChars)
 int count_chars (char *file_name)
 {
 	assert (file_name);
@@ -15,7 +15,7 @@ int count_chars (char *file_name)
 	return NChars;
 }
 
-//Reads input file, saves it in text[] and returns number of srings (NLines)
+//Записывает текст из исходного файла в массив text и возвращает количество строк (NLines)
 int input (char *file_name, int NChars, char *text)
 {
 	int NLines = 0;
@@ -36,7 +36,7 @@ int input (char *file_name, int NChars, char *text)
 	return NLines;
 }
 
-//Sorts strings in recieved array
+//Записывает адреса начала строк в массив index и сортирует их по алфавиту
 void sort (char **index, int NLines, int NChars, char *text)
 {
 	char *tmp;
@@ -66,7 +66,7 @@ void sort (char **index, int NLines, int NChars, char *text)
 	}
 }
 
-//Writes sorted strings in output file
+//Записывает отсортированный текст в файл вывода
 void output (char *file_name, int NLines, char **index)
 {
 	assert (file_name);
