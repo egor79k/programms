@@ -3,6 +3,37 @@
 #include <stdlib.h>
 #include <assert.h>
 
+int count_chars (char *file_name);
+
+int input (char *file_name, int NChars, char *text);
+
+void find_strings (char **index, int NChars, char *text);
+
+void sort (char **index, int NLines, int NChars);
+
+void output (char *file_name, int NLines, char **index);
+
+
+int main ()
+{
+	int NChars = 0, NLines = 0;
+	char file_name[20];
+
+	printf ("Enter input file name: ");
+	scanf ("%s", file_name);
+	NChars = count_chars (file_name);
+	printf("|About input file:\n||Number of symbols: %d\n", NChars);
+	char *text = (char *) calloc (NChars, sizeof (char));
+	NLines = input (file_name, NChars, text);
+	printf("||Number of strings: %d\n", NLines);
+	char *index[NLines];
+	find_strings (index, NChars, text);
+	sort (index, NLines, NChars);
+	printf ("Enter output file name: ");
+	scanf ("%s", file_name);
+	output (file_name, NLines, index);
+}
+
 //Возвращает количество символов в исходном файле (NChars)
 int count_chars (char *file_name)
 {
@@ -18,6 +49,9 @@ int count_chars (char *file_name)
 //Записывает текст из исходного файла в массив text и возвращает количество строк (NLines)
 int input (char *file_name, int NChars, char *text)
 {
+	assert (file_name);
+	assert (NChars != 0);
+	assert (text);
 	int NLines = 0;
 	FILE *in = fopen (file_name, "r");
 	fread (text, sizeof (char), NChars, in);
@@ -36,13 +70,15 @@ int input (char *file_name, int NChars, char *text)
 	return NLines;
 }
 
-//Записывает адреса начала строк в массив index и сортирует их по алфавиту
-void sort (char **index, int NLines, int NChars, char *text)
+
+void find_strings (char **index, int NChars, char *text)
 {
-	char *tmp;
+	assert (index);
+	assert (NChars != 0);
+	assert (text);
 	int j = 0;
 	index[0] = &text[0];
-	for (int i = 1; i <= NChars; i++)
+	for (int i = 1; i <= NChars + 1; i++)
 	{
 		if (text[i-1] == '\n')
 		{
@@ -51,11 +87,20 @@ void sort (char **index, int NLines, int NChars, char *text)
 			index[j] = &text[i];
 		}
 	}
+}
+
+//Записывает адреса начала строк в массив index и сортирует их по алфавиту
+void sort (char **index, int NLines, int NChars)
+{
+	assert (index);
+	assert (NLines != 0);
+	assert (NChars != 0);
+	char *tmp = 0;
 	for (int i = 0; i < NLines; i++)
 	{
 		for (int k = 1; k < NLines-i; k++)
 		{
-			if (strcmp (index[k], index[k-1]) < 0)
+			if (strcmp (index[k], index[k - 1]) < 0)
 			{
 				tmp = index[k];
 				index[k] = index[k-1];
@@ -70,30 +115,11 @@ void sort (char **index, int NLines, int NChars, char *text)
 void output (char *file_name, int NLines, char **index)
 {
 	assert (file_name);
+	assert (NLines != 0);
 	assert (index);
 	FILE *out = fopen (file_name, "w");
 	for (int i = 0; i < NLines; i++)
 	{
 		fprintf(out, "%s\n", index[i]);
 	}
-}
-
-
-int main ()
-{
-	int NChars = 0, NLines = 0;
-	char file_name[20];
-
-	printf ("Enter input file name: ");
-	scanf ("%s", file_name);
-	NChars = count_chars (file_name);
-	printf("|About input file:\n||Number of symbols: %d\n", NChars);
-	char text[NChars];
-	NLines = input (file_name, NChars, text);
-	printf("||Number of strings: %d\n", NLines);
-	char *index[NLines];
-	sort (index, NLines, NChars, text);
-	printf ("Enter output file name: ");
-	scanf ("%s", file_name);
-	output (file_name, NLines, index);
 }
