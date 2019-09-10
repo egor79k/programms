@@ -70,7 +70,7 @@ int input (char *file_name, int NChars, char *text)
 	return NLines;
 }
 
-
+//Записывает адреса начала строк в массив index
 void find_strings (char **index, int NChars, char *text)
 {
 	assert (index);
@@ -89,7 +89,7 @@ void find_strings (char **index, int NChars, char *text)
 	}
 }
 
-//Записывает адреса начала строк в массив index и сортирует их по алфавиту
+//Сортирует строки по алфаивту
 void sort (char **index, int NLines, int NChars)
 {
 	assert (index);
