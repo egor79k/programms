@@ -18,7 +18,6 @@ int main ()
 {
 	int NChars = 0, NLines = 0;
 	char file_name[20];
-
 	printf ("Enter input file name: ");
 	scanf ("%s", file_name);
 	NChars = count_chars (file_name);
@@ -72,7 +71,7 @@ int input (char *file_name, int NChars, char *text)
 	return NLines;
 }
 
-//Записывает адреса начала строк в массив index и адреса концов строк в массив end_index
+//Записывает адреса начал строк в массивы start_index и original_index, а адреса концов строк в массив end_index
 void find_strings (char **start_index, char **end_index, char **original_index, int NChars, char *text)
 {
 	assert (start_index);
@@ -117,7 +116,7 @@ void sort (char **start_index, char **end_index, int NLines, int NChars)
 	{
 		for (int k = 1; k < NLines-i; k++)
 		{
-			if (strcmp (start_index[k], start_index[k - 1]) < 0)
+			if (strcmp (start_index[k], start_index[k - 1]) < 0) //Сортировка строк по началам
 			{
 				tmp = start_index[k];
 				start_index[k] = start_index[k-1];
@@ -128,11 +127,11 @@ void sort (char **start_index, char **end_index, int NLines, int NChars)
 			while (*end_tmp1 == ',' || *end_tmp1 == ';' || *end_tmp1 == '.' || *end_tmp1 == ':' || *end_tmp1 == '!' || *end_tmp1 == '?' || *end_tmp1 == '"') end_tmp1--;
 			while (*end_tmp2 == ',' || *end_tmp2 == ';' || *end_tmp2 == '.' || *end_tmp2 == ':' || *end_tmp2 == '!' || *end_tmp2 == '?' || *end_tmp2 == '"') end_tmp2--;
 			while (*end_tmp1 == *end_tmp2)
-			{
+			{											//  ^ Пропуск знаков препинания
 				end_tmp1--;
 				end_tmp2--;
 			}
-			if ((int)*end_tmp1 - (int)*end_tmp2 < 0)
+			if ((int)*end_tmp1 - (int)*end_tmp2 < 0) //Сортировка строк по концам
 			{
 				tmp = end_index[k];
 				end_index[k] = end_index[k - 1];
@@ -152,12 +151,12 @@ void output (char *file_name, int NLines, char **start_index, char **end_index, 
 	assert (start_index);
 	assert (end_index);
 	FILE *out = fopen (file_name, "w");
-	fprintf(out, "-----------\nStarts sort\nin-----------\n");
+	fprintf(out, "-----------\nStarts sort\n-----------\n"); //Запись строк в алфавитном порядке
 	for (int i = 0; i < NLines; i++)
 	{
 		fprintf(out, "%s\n", start_index[i]);
 	}
-	fprintf(out, "\n---------\nEnds sort\n---------\n");
+	fprintf(out, "\n---------\nEnds sort\n---------\n"); //Запись строк в алфавитном порядке по окончаниям
 	for (int i = 0; i < NLines; i++)
 	{
 		while (*end_index[i] != '\0')
@@ -167,7 +166,7 @@ void output (char *file_name, int NLines, char **start_index, char **end_index, 
 		end_index[i]++;
 		fprintf(out, "%s\n", end_index[i]);
 	}
-	fprintf(out, "\n-------------\nOriginal text\n-------------\n");
+	fprintf(out, "\n-------------\nOriginal text\n-------------\n"); //Запись изначального варианта текста
 	for (int i = 0; i < NLines; i++)
 	{
 		fprintf(out, "%s\n", original_index[i]);
