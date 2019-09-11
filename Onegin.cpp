@@ -7,11 +7,11 @@ int count_chars (char *file_name);
 
 int input (char *file_name, int NChars, char *text);
 
-void find_strings (char **index, int NChars, char *text);
+void find_strings (char **start_index, char **end_index, char **original_index, int NChars, char *text);
 
-void sort (char **index, int NLines, int NChars);
+void sort (char **start_index, char **end_index, int NLines, int NChars);
 
-void output (char *file_name, int NLines, char **index);
+void output (char *file_name, int NLines, char **start_index, char **end_index, char **original_index);
 
 
 int main ()
@@ -26,12 +26,14 @@ int main ()
 	char *text = (char *) calloc (NChars, sizeof (char));
 	NLines = input (file_name, NChars, text);
 	printf("||Number of strings: %d\n", NLines);
-	char *index[NLines];
-	find_strings (index, NChars, text);
-	sort (index, NLines, NChars);
+	char *start_index[NLines];
+	char *end_index[NLines];
+	char *original_index[NLines];
+	find_strings (start_index, end_index, original_index, NChars, text);
+	sort (start_index, end_index, NLines, NChars);
 	printf ("Enter output file name: ");
 	scanf ("%s", file_name);
-	output (file_name, NLines, index);
+	output (file_name, NLines, start_index, end_index, original_index);
 }
 
 //Возвращает количество символов в исходном файле (NChars)
@@ -43,7 +45,7 @@ int count_chars (char *file_name)
 	fseek (in, 0, SEEK_END);
 	NChars = ftell (in);
 	fclose (in);
-	return NChars;
+	return NChars + 1;
 }
 
 //Записывает текст из исходного файла в массив text и возвращает количество строк (NLines)
@@ -60,7 +62,7 @@ int input (char *file_name, int NChars, char *text)
 	{
 		text[NChars] = '\n';
 	}
-	for (int i = 0; i < NChars; i++)
+	for (int i = 0; i <= NChars; i++)
 	{
 		if (text[i] == '\n')
 		{
@@ -70,56 +72,104 @@ int input (char *file_name, int NChars, char *text)
 	return NLines;
 }
 
-//Записывает адреса начала строк в массив index
-void find_strings (char **index, int NChars, char *text)
+//Записывает адреса начала строк в массив index и адреса концов строк в массив end_index
+void find_strings (char **start_index, char **end_index, char **original_index, int NChars, char *text)
 {
-	assert (index);
+	assert (start_index);
+	assert (end_index);
 	assert (NChars != 0);
 	assert (text);
 	int j = 0;
-	index[0] = &text[0];
-	for (int i = 1; i <= NChars + 1; i++)
+	start_index[0] = &text[0];
+	original_index[0] = &text[0];
+	for (int i = 1; i <= NChars; i++) //Поиск начал строк
 	{
 		if (text[i-1] == '\n')
 		{
-			text[i-1] = '\0';
 			j++;
-			index[j] = &text[i];
+			start_index[j] = &text[i];
+			original_index[j] = &text[i];
+		}
+	}
+	j = 0;
+	for (int i = 1; i <= NChars; i++) //Поиск концов строк
+	{
+		if (text[i] == '\n')
+		{
+			text[i] = '\0';
+			end_index[j] = &text[i-1];
+			j++;
 		}
 	}
 }
 
 //Сортирует строки по алфаивту
-void sort (char **index, int NLines, int NChars)
+void sort (char **start_index, char **end_index, int NLines, int NChars)
 {
-	assert (index);
+	assert (start_index);
+	assert (end_index);
 	assert (NLines != 0);
 	assert (NChars != 0);
 	char *tmp = 0;
+	char *end_tmp1 = 0;
+	char *end_tmp2 = 0;
 	for (int i = 0; i < NLines; i++)
 	{
 		for (int k = 1; k < NLines-i; k++)
 		{
-			if (strcmp (index[k], index[k - 1]) < 0)
+			if (strcmp (start_index[k], start_index[k - 1]) < 0)
 			{
-				tmp = index[k];
-				index[k] = index[k-1];
-				index[k-1] = tmp;
+				tmp = start_index[k];
+				start_index[k] = start_index[k-1];
+				start_index[k-1] = tmp;
+			}
+			end_tmp1 = end_index[k];
+			end_tmp2 = end_index[k - 1];
+			while (*end_tmp1 == ',' || *end_tmp1 == ';' || *end_tmp1 == '.' || *end_tmp1 == ':' || *end_tmp1 == '!' || *end_tmp1 == '?' || *end_tmp1 == '"') end_tmp1--;
+			while (*end_tmp2 == ',' || *end_tmp2 == ';' || *end_tmp2 == '.' || *end_tmp2 == ':' || *end_tmp2 == '!' || *end_tmp2 == '?' || *end_tmp2 == '"') end_tmp2--;
+			while (*end_tmp1 == *end_tmp2)
+			{
+				end_tmp1--;
+				end_tmp2--;
+			}
+			if ((int)*end_tmp1 - (int)*end_tmp2 < 0)
+			{
+				tmp = end_index[k];
+				end_index[k] = end_index[k - 1];
+				end_index[k - 1] = tmp;
 			}
 		}
 
 	}
+	
 }
 
 //Записывает отсортированный текст в файл вывода
-void output (char *file_name, int NLines, char **index)
+void output (char *file_name, int NLines, char **start_index, char **end_index, char **original_index)
 {
 	assert (file_name);
 	assert (NLines != 0);
-	assert (index);
+	assert (start_index);
+	assert (end_index);
 	FILE *out = fopen (file_name, "w");
+	fprintf(out, "-----------\nStarts sort\nin-----------\n");
 	for (int i = 0; i < NLines; i++)
 	{
-		fprintf(out, "%s\n", index[i]);
+		fprintf(out, "%s\n", start_index[i]);
+	}
+	fprintf(out, "\n---------\nEnds sort\n---------\n");
+	for (int i = 0; i < NLines; i++)
+	{
+		while (*end_index[i] != '\0')
+		{
+		end_index[i]--;
+		}
+		end_index[i]++;
+		fprintf(out, "%s\n", end_index[i]);
+	}
+	fprintf(out, "\n-------------\nOriginal text\n-------------\n");
+	for (int i = 0; i < NLines; i++)
+	{
+		fprintf(out, "%s\n", original_index[i]);
 	}
 }
