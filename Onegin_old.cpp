@@ -27,9 +27,13 @@ void start_sort (char **start_index, const int NLines, const int NChars);
 
 void end_sort (char **end_index, const int NLines, const int NChars);
 
+char *skip_marks (char *pointer);
+
 void change (char **first, char **second);
 
-void output (const char *file_name, const int NLines, char **start_index, char **end_index, char **original_index);
+void find_starts_by_ends (char **end_index, int NLines, char *begin);
+
+void output (const char *file_name, const int NLines, char **index, char *header);
 
 
 int main ()
@@ -58,19 +62,22 @@ int main ()
 	printf("||Number of strings: %d\n", NLines);
 
 	//Declaring massives of pointers and filling them...
-	char **start_index = (char **) calloc (NLines, sizeof (int));
-	char **end_index = (char **) calloc (NLines, sizeof (int));
+	char **start_index    = (char **) calloc (NLines, sizeof (int));
+	char **end_index      = (char **) calloc (NLines, sizeof (int));
 	char **original_index = (char **) calloc (NLines, sizeof (int));
 	find_strings (start_index, end_index, original_index, NChars, text);
 
 	//Sorting...
 	start_sort (start_index, NLines, NChars);
 	end_sort (end_index, NLines, NChars);
+	find_starts_by_ends (end_index, NLines, original_index[0] - 1);
 	
 	//Writing result in pointed file...
 	printf ("\nEnter output file name: ");
 	get_file_name (file_name, "w");
-	output (file_name, NLines, start_index, end_index, original_index);
+	output (file_name, NLines, start_index, "-----------\nStarts sort\n-----------\n");
+	output (file_name, NLines, end_index, "\n-----------\nEnds sort\n-----------\n");
+	output (file_name, NLines, original_index, "\n-----------\nOriginal text\n-----------\n");
 }
 
 //Reads filename and checks it
@@ -161,7 +168,6 @@ void start_sort (char **start_index, const int NLines, const int NChars)
 	assert (start_index);
 	assert (NLines != 0);
 	assert (NChars != 0);
-	char *tmp = 0;
 	for (int i = 0; i < NLines; i++)
 	{
 		for (int k = 1; k < NLines-i; k++)
@@ -182,19 +188,16 @@ void end_sort (char **end_index, const int NLines, const int NChars)
 	assert (end_index);
 	assert (NLines != 0);
 	assert (NChars != 0);
-	char *tmp = 0;
 	char *end_tmp1 = 0;
 	char *end_tmp2 = 0;
 	for (int i = 0; i < NLines; i++)
 	{
 		for (int k = 1; k < NLines-i; k++)
 		{
-			end_tmp1 = end_index[k];
-			end_tmp2 = end_index[k - 1];
-			while (*end_tmp1 == ',' || *end_tmp1 == ';' || *end_tmp1 == '.' || *end_tmp1 == ':' || *end_tmp1 == '!' || *end_tmp1 == '?' || *end_tmp1 == '"') end_tmp1--;
-			while (*end_tmp2 == ',' || *end_tmp2 == ';' || *end_tmp2 == '.' || *end_tmp2 == ':' || *end_tmp2 == '!' || *end_tmp2 == '?' || *end_tmp2 == '"') end_tmp2--;
+			end_tmp1 = skip_marks (end_index[k]);		//Skipping punctuation marks
+			end_tmp2 = skip_marks (end_index[k - 1]);
 			while (*end_tmp1 == *end_tmp2)
-			{											//  ^ Skipping punctuation marks
+			{											
 				end_tmp1--;
 				end_tmp2--;
 			}
@@ -209,6 +212,13 @@ void end_sort (char **end_index, const int NLines, const int NChars)
 }
 
 
+char *skip_marks (char *pointer)
+{
+	while (*pointer == ',' || *pointer == ';' || *pointer == '.' || *pointer == ':' || *pointer == '!' || *pointer == '?' || *pointer == '"') pointer--;
+	return pointer;
+}
+
+//Swaps two pointers
 void change (char **first, char **second)
 {
 	char *tmp;
@@ -218,76 +228,35 @@ void change (char **first, char **second)
 	return;
 }
 
+//Finds start index of string by its end index
+void find_starts_by_ends (char **end_index, int NLines, char *begin)
+{
+	for (int i = 0; i < NLines; i++)
+	{
+		while (*end_index[i] != '\0' && end_index[i] != begin)
+		{
+			end_index[i]--;
+		}
+		end_index[i]++;
+	}
+}
+
 //Writes sorted texts in output file
-void output (const char *file_name, const int NLines, char **start_index, char **end_index, char **original_index)
+void output (const char *file_name, const int NLines, char **index, char *header)
 {
 	assert (file_name);
 	assert (NLines != 0);
-	assert (start_index);
-	assert (end_index);
-	assert (original_index);
-	FILE *out = fopen (file_name, "w");
-	fprintf(out, "-----------\nStarts sort\n-----------\n"); //Запись строк в алфавитном порядке
+	assert (index);
+	FILE *out = fopen (file_name, "a");
+	fprintf(out, "%s", header); //Запись строк в алфавитном порядке
 	for (int i = 0; i < NLines; i++)
 	{
-		fprintf(out, "%s\n", start_index[i]);
-	}
-	fprintf(out, "\n---------\nEnds sort\n---------\n"); //Запись строк в алфавитном порядке по окончаниям
-	for (int i = 0; i < NLines; i++)
-	{
-		while (*end_index[i] != '\0' && end_index[i] != original_index[0] - 1)
-		{
-		end_index[i]--;
-		}
-		end_index[i]++;
-		fprintf(out, "%s\n", end_index[i]);
-	}
-	fprintf(out, "\n-------------\nOriginal text\n-------------\n"); //Запись изначального варианта текста
-	for (int i = 0; i < NLines; i++)
-	{
-		fprintf(out, "%s\n", original_index[i]);
+		fprintf(out, "%s\n", index[i]);
 	}
 	fclose (out);
 	return;
 }
 
-
-//Comparators__________________________________________________
-
-//Starts sorter
-void start_sort (char **start_index, int k)
-{
-	if (strcmp (start_index[k], start_index[k - 1]) < 0) //Sorting strings by starts
-	{
-		char *tmp = 0;
-		tmp = start_index[k];
-		start_index[k] = start_index[k-1];
-		start_index[k-1] = tmp;
-	}
-}
-
-
-void end_sort (char **end_index, int k)
-{
-	char *tmp = 0;
-	char *end_tmp1 = 0;
-	char *end_tmp2 = 0;
-	end_tmp1 = end_index[k];
-	end_tmp2 = end_index[k - 1];
-	while (*end_tmp1 == ',' || *end_tmp1 == ';' || *end_tmp1 == '.' || *end_tmp1 == ':' || *end_tmp1 == '!' || *end_tmp1 == '?' || *end_tmp1 == '"') end_tmp1--;
-	while (*end_tmp2 == ',' || *end_tmp2 == ';' || *end_tmp2 == '.' || *end_tmp2 == ':' || *end_tmp2 == '!' || *end_tmp2 == '?' || *end_tmp2 == '"') end_tmp2--;
-	while (*end_tmp1 == *end_tmp2)
-	{											//  ^ Skipping punctuation marks
-		end_tmp1--;
-		end_tmp2--;
-	}
-	if ((int)*end_tmp1 - (int)*end_tmp2 < 0) //Sorting strings by ends
-	{
-		tmp = end_index[k];
-		end_index[k] = end_index[k - 1];
-		end_index[k - 1] = tmp;
-	}
-}
 
 //Testing functions________________________________________________________________
 
@@ -305,10 +274,10 @@ void count_chars_test ()
 	int NChars = count_chars ("Test_file.txt");
 	if (NChars != 64)
 	{
-		printf ("||NChars_test: error: NChars = %d, should be 64\n", NChars);
+		printf ("||count_chars_test: error: NChars = %d, should be 64\n", NChars);
 		exit (1);
 	}
-	else printf ("||NChars_test: OK\n");
+	else printf ("||count_chars_test: %3s\n", "OK");
 	return;
 }
 
@@ -319,10 +288,10 @@ void input_test ()
 	int NLines = input ("Test_file.txt", 64, test_text);
 	if (NLines != 7)
 	{
-		printf ("||NLines_test: error: NLines = %d, should be 7\n", NLines);
+		printf ("||input_test: error: NLines = %d, should be 7\n", NLines);
 		exit (1);
 	}
-	else printf ("||NLines_test: OK\n");
+	else printf ("||input_test: %9s\n", "OK");
 	return;
 }
 
@@ -364,19 +333,21 @@ void find_strings_test ()
 
 void start_sort_test ()
 {
-	struct string test_index[6];
+	char *test_start_index[6];
+	char *test_end_index[6];
+	char *test_original_index[6];
 	char test_text[64];
 	char sorted_starts[6] = {'1', 'a', 'n', 'o', 'q', 't'};
 	FILE *in = fopen ("Test_file.txt", "r");
 	fread (test_text, sizeof (char), 64, in);
 	fclose (in);
-	find_strings (test_index, 64, test_text);
-	start_sort (test_index, 6, 64);
+	find_strings (test_start_index, test_end_index, test_original_index, 64, test_text);
+	start_sort (test_start_index, 6, 64);
 	for (int i = 0; i < 6; i++)
 	{
-		if (*test_index[i].start != sorted_starts[i])
+		if (*test_start_index[i] != sorted_starts[i])
 		{
-			printf ("||start_sort_test: error: test_start_index[%d] = '%c', should be '%c'\n", i, *test_index[i].start, sorted_starts[i]);
+			printf ("||start_sort_test: error: test_start_index[%d] = '%c', should be '%c'\n", i, *test_start_index[i], sorted_starts[i]);
 			exit (1);
 		}  
 	}
@@ -387,19 +358,21 @@ void start_sort_test ()
 
 void end_sort_test ()
 {
-	struct string test_index[6];
+	char *test_start_index[6];
+	char *test_end_index[6];
+	char *test_original_index[6];
 	char test_text[64];
 	char sorted_ends[6] = {'0', '.', ',', '!', 's', 'y'};
 	FILE *in = fopen ("Test_file.txt", "r");
 	fread (test_text, sizeof (char), 64, in);
 	fclose (in);
-	find_strings (test_index, 64, test_text);
-	end_sort (test_index, 6, 64);
+	find_strings (test_start_index, test_end_index, test_original_index, 64, test_text);
+	end_sort (test_end_index, 6, 64);
 	for (int i = 0; i < 6; i++)
 	{
-		if (*test_index[i].end != sorted_ends[i])
+		if (*test_end_index[i] != sorted_ends[i])
 		{
-			printf ("||end_sort_test: error: test_start_index[%d] = '%c', should be '%c'\n", i, *test_index[i].end, sorted_ends[i]);
+			printf ("||end_sort_test: error: test_end_index[%d] = '%c', should be '%c'\n", i, *test_end_index[i], sorted_ends[i]);
 			exit (1);
 		}  
 	}

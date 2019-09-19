@@ -35,6 +35,10 @@ void start_sort (struct string *index, const int NLines, const int NChars);
 
 void end_sort (struct string *index, const int NLines, const int NChars);
 
+char *skip_marks (char *pointer);
+
+void change (char **first, char **second);
+
 void output (const char *file_name, const int NLines, struct string *index);
 
 
@@ -164,16 +168,13 @@ void start_sort (struct string *index, const int NLines, const int NChars)
 	assert (index);
 	assert (NLines != 0);
 	assert (NChars != 0);
-	char *tmp = 0;
 	for (int i = 0; i < NLines; i++)
 	{
 		for (int k = 1; k < NLines-i; k++)
 		{
 			if (strcmp (index[k].start, index[k - 1].start) < 0) //Sorting strings by starts
 			{
-				tmp = index[k].start;
-				index[k].start = index[k-1].start;
-				index[k-1].start = tmp;
+				change (&index[k].start, &index[k-1].start);
 			}
 		}
 
@@ -187,31 +188,43 @@ void end_sort (struct string *index, const int NLines, const int NChars)
 	assert (index);
 	assert (NLines != 0);
 	assert (NChars != 0);
-	char *tmp = 0;
 	char *end_tmp1 = 0;
 	char *end_tmp2 = 0;
 	for (int i = 0; i < NLines; i++)
 	{
 		for (int k = 1; k < NLines-i; k++)
 		{
-			end_tmp1 = index[k].end;
-			end_tmp2 = index[k - 1].end;
-			while (*end_tmp1 == ',' || *end_tmp1 == ';' || *end_tmp1 == '.' || *end_tmp1 == ':' || *end_tmp1 == '!' || *end_tmp1 == '?' || *end_tmp1 == '"') end_tmp1--;
-			while (*end_tmp2 == ',' || *end_tmp2 == ';' || *end_tmp2 == '.' || *end_tmp2 == ':' || *end_tmp2 == '!' || *end_tmp2 == '?' || *end_tmp2 == '"') end_tmp2--;
+			end_tmp1 = skip_marks (index[k].end);		//Skipping punctuation marks
+			end_tmp2 = skip_marks (index[k - 1].end);
 			while (*end_tmp1 == *end_tmp2)
-			{											//  ^ Skipping punctuation marks
+			{											
 				end_tmp1--;
 				end_tmp2--;
 			}
 			if ((int)*end_tmp1 - (int)*end_tmp2 < 0) //Sorting strings by ends
 			{
-				tmp = index[k].end;
-				index[k].end = index[k - 1].end;
-				index[k - 1].end = tmp;
+				change (&index[k].end, &index[k-1].end);
 			}
 		}
 
 	}
+	return;
+}
+
+//Skips punctuation marks from end of the string
+char *skip_marks (char *pointer)
+{
+	while (*pointer == ',' || *pointer == ';' || *pointer == '.' || *pointer == ':' || *pointer == '!' || *pointer == '?' || *pointer == '"') pointer--;
+	return pointer;
+}
+
+//Swaps two pointers
+void change (char **first, char **second)
+{
+	char *tmp;
+	tmp = *first;
+	*first = *second;
+	*second = tmp;
 	return;
 }
 
