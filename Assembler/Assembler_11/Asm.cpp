@@ -1,7 +1,7 @@
 #include "Functions.cpp"
 
 #define GET_PARAMETR 													\
-		int k = 0;															\
+		int k = 0;														\
 		memset (parametr, '\0', sizeof (char) * MAX_PARAMETR_LENGTH);	\
 		while (*text != '\n' && *text != '\0' && *text != ' ')			\
 		{																\
