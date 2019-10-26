@@ -1,0 +1,8 @@
+/**
+* Version 10
+*/
+
+REGISTER(AX, 1)
+REGISTER(BX, 2)
+REGISTER(CX, 3)
+REGISTER(DX, 4)
